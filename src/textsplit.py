@@ -1,4 +1,4 @@
-from textnode import TextNode, TextType
+from textnode import *
 from htmlnode import *
 
 
@@ -154,11 +154,77 @@ def markdown_to_blocks(markdown):
     
     return blocks
 
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    parent_node = HTMLNode(tag="div", children=[])
+    
+    for block in blocks:
+        block_type = block_to_block_type(block)
+
+        if block_type.value == "paragraph":
+            paragraph_node = HTMLNode(tag="p", children=[])
+            paragraph_node.children = text_to_children(block)
+            parent_node.children.append(paragraph_node)
+
+        elif block_type.value == "heading":
+            heading_match = re.match(r'^(#+)', block)
+            if heading_match:
+                heading_level = len(heading_match.group(1))
+                
+                # Create the heading node
+                heading_node = HTMLNode(tag=f"h{heading_level}", children=[])
+
+                # Remove the heading markers and any leading/trailing whitespaces
+                heading_text = block[heading_level:].strip()
+
+                # Process the heading text and assign the children
+                heading_node.children = text_to_children(heading_text)
+
+                # Add the heading node to the parent
+                parent_node.children.append(heading_node)
+
+        elif block_type.value == "code":
+            # Remove the triple backticks and get the code content
+            code_content = "\n".join(block.split("\n")[1:-1]) # Skip first and last lines with ```
+
+            # Create the pre and code nodes
+            pre_node = HTMLNode(tag="pre", children=[])
+            code_node = HTMLNode(tag="code", children=[])
+
+            # TextNode directly
+            text_node = TextNode(code_content)
+            code_html_node = text_node_to_html_node(text_node)
+
+            # Build the nested structure: pre > code > content
+            code_node.children = [code_html_node]
+            pre_node.children = [code_node]
+
+            # Add to parent
+            parent_node.children.append(pre_node)
+            
+            
+        elif block_type.value == "quote":
+            content = block.split()[2:-1]
+
+            pre_block_quote = 
+            
+        elif block_type.value == "unordered_list":
+            # Create ul node with li children
+            
+        elif block_type.value == "ordered_list":
+            # Create ol node with li children
+
+        
+
+        # if block_type == "paragraph":
+
+    
+
 
     
     
-# markdown_text ="- This is the first list item in a list block\n\n- This is a list item\n\n- This is another list item"
+markdown_text ="- This is the first list item in a list block\n\n- This is a list item\n\n- This is another list item"
 
-# print(markdown_to_blocks(markdown_text))
+print(markdown_to_html_node(markdown_text))
 
 
