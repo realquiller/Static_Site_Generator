@@ -553,6 +553,126 @@ class TestHtmlNode(unittest.TestCase):
         block = "1.First item without space after dot"
         self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
 
+    # MK BLOCKS TO HTML
+    
+    def test_mk_paragraphs_to_html(self):
+        md = """
+        This is **bolded** paragraph
+        text in a p
+        tag here
+
+        This is another paragraph with _italic_ text and `code` here
+
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
+        )
+
+    def test_mk_codeblock_to_html(self):
+        md = """
+        ```
+        This is text that _should_ remain
+        the **same** even with inline stuff
+        ```
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
+        )
+
+    def test_mk_paragraph_to_html_naruto(self):
+        md = """
+        Naruto said, **"I never go back on my word!"** That's my _nindō_, my ninja way!
+
+        Sasuke replied coldly, `"You're still such a loser, Naruto."`
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>Naruto said, <b>\"I never go back on my word!\"</b> That's my <i>nindō</i>, my ninja way!</p><p>Sasuke replied coldly, <code>\"You're still such a loser, Naruto.\"</code></p></div>",
+        )
+
+    def test_mk_codeblock_to_html_with_bleach_dialogue(self):
+        md = """
+        ```
+        Ichigo: Bankai!
+        Byakuya: Impossible... his speed has **increased**!
+        ```
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>Ichigo: Bankai!\nByakuya: Impossible... his speed has **increased**!\n</code></pre></div>",
+        )
+
+    def test_mk_heading_to_html_with_anime(self):
+        md = """
+        # Naruto's Dream
+        ## Hokage Journey
+        ### Shadow Clone Techniques
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h1>Naruto's Dream</h1><h2>Hokage Journey</h2><h3>Shadow Clone Techniques</h3></div>",
+        )
+
+    def test_mk_quote_to_html_with_bleach_philosophy(self):
+        md = """
+        > If miracles only happen once, what are they called the second time?
+        > – Ichigo Kurosaki
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>If miracles only happen once, what are they called the second time?\n– Ichigo Kurosaki</blockquote></div>",
+        )
+
+    def test_mk_unordered_list_to_html_jutsu(self):
+        md = """
+        - **Chidori**
+        - _Amaterasu_
+        - `Susano'o`
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul><li><b>Chidori</b></li><li><i>Amaterasu</i></li><li><code>Susano'o</code></li></ul></div>",
+        )
+
+    def test_mk_ordered_list_to_html_bleach_characters(self):
+        md = """
+        1. Ichigo Kurosaki
+        2. Rukia Kuchiki
+        3. Kisuke Urahara
+        """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol><li>Ichigo Kurosaki</li><li>Rukia Kuchiki</li><li>Kisuke Urahara</li></ol></div>",
+        )
+
+
+
     
 
 if __name__ == "__main__":

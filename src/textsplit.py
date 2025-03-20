@@ -162,69 +162,150 @@ def markdown_to_html_node(markdown):
         block_type = block_to_block_type(block)
 
         if block_type.value == "paragraph":
+            # Create the paragraph node
             paragraph_node = HTMLNode(tag="p", children=[])
-            paragraph_node.children = text_to_children(block)
+
+            # Replace newlines with spaces and normalize whitespace
+
+            normalized_text = re.sub(r'\s+', ' ', block.replace('\n', ' ')).strip()
+
+            # Process the paragraph text and assign the children
+            paragraph_node.children = text_to_children(normalized_text)
+
+            # Add the paragraph node to the parent
             parent_node.children.append(paragraph_node)
 
         elif block_type.value == "heading":
-            heading_match = re.match(r'^(#+)', block)
-            if heading_match:
-                heading_level = len(heading_match.group(1))
-                
-                # Create the heading node
-                heading_node = HTMLNode(tag=f"h{heading_level}", children=[])
+            # Split the block into lines to handle multiple headings
+            lines = block.split("\n")
+            for line in lines:
+                if line.strip():  # Only process non-empty lines
+                    heading_match = re.match(r'^(#+)', line)
+                    if heading_match:
+                        heading_level = len(heading_match.group(1))
+                        
+                        # Create the heading node
+                        heading_node = HTMLNode(tag=f"h{heading_level}", children=[])
 
-                # Remove the heading markers and any leading/trailing whitespaces
-                heading_text = block[heading_level:].strip()
+                        # Remove the heading markers and any leading/trailing whitespaces
+                        heading_text = line[heading_level:].strip()
 
-                # Process the heading text and assign the children
-                heading_node.children = text_to_children(heading_text)
+                        # Process the heading text and assign the children
+                        heading_node.children = text_to_children(heading_text)
 
-                # Add the heading node to the parent
-                parent_node.children.append(heading_node)
+                        # Add the heading node to the parent
+                        parent_node.children.append(heading_node)
 
         elif block_type.value == "code":
-            # Remove the triple backticks and get the code content
-            code_content = "\n".join(block.split("\n")[1:-1]) # Skip first and last lines with ```
-
-            # Create the pre and code nodes
-            pre_node = HTMLNode(tag="pre", children=[])
+            # Create the code node structure: pre > code
             code_node = HTMLNode(tag="code", children=[])
+            pre_node = HTMLNode(tag="pre", children=[code_node])
+            
+            # Extract the code content from the block
+            code_content = block.strip()
+            if code_content.startswith("```") and code_content.endswith("```"):
+                code_content = code_content[3:-3]
 
-            # TextNode directly
-            text_node = TextNode(code_content)
-            code_html_node = text_node_to_html_node(text_node)
+            # To make sure the code content has a trailing newline
+            code_content = code_content.lstrip("\n")
 
-            # Build the nested structure: pre > code > content
-            code_node.children = [code_html_node]
-            pre_node.children = [code_node]
+            # Ensure exactly one trailing newline
+            code_content = code_content.rstrip("\n") + "\n"
 
-            # Add to parent
+            # Create a text node with type "text" to avoid inline markdown processing
+            text_node = TextNode(code_content, TextType.TEXT)
+
+            # Convert to HTML node and add as child to code_node
+            code_node.children.append(text_node_to_html_node(text_node))
+
+            # Add pre_node to parent
             parent_node.children.append(pre_node)
             
-            
+        
         elif block_type.value == "quote":
-            content = block.split()[2:-1]
+            # Remove the '>' marker from each line and join them
+            quote_lines = [line.lstrip('>').strip() for line in block.split('\n')]
+            quote_content = '\n'.join(quote_lines).strip()
 
-            pre_block_quote = 
+            # Create the blockquote node
+            blockquote_node = HTMLNode(tag="blockquote", children=[])
+
+            # Process the quote content and assign children
+            blockquote_node.children = text_to_children(quote_content)
+
+            #Add to parent
+            parent_node.children.append(blockquote_node)
             
         elif block_type.value == "unordered_list":
-            # Create ul node with li children
+            # Create the ul node
+            ul_node = HTMLNode(tag="ul", children=[])
             
+            # Split the block into lines (list items)
+            list_items = block.split("\n")
+
+            # Process each list item
+            for item in list_items:
+                if item.strip():
+                    # Remove the '- ' prefix and trim
+                    item_text = item.strip().lstrip('-').strip()
+
+                    # Create a list item node
+                    li_node = HTMLNode(tag="li", children=[])
+
+                    # Process inline formatting for the item text
+                    li_node.children = text_to_children(item_text)
+
+                    # Add the list item to the unordered list
+                    ul_node.children.append(li_node)
+            
+            # Add the list item to the unordered list
+            parent_node.children.append(ul_node)
+
         elif block_type.value == "ordered_list":
-            # Create ol node with li children
+            # Create the ol node
+            ol_node = HTMLNode(tag="ol", children=[])
+            
+            # Split the block into lines (list items)
+            list_items = block.split("\n")
+
+            # Process each list item
+            for item in list_items:
+                if item.strip(): #Skip empty lines
+                    # Remove the number prefix using regex
+                    item_text = re.sub(r'^\d+\.\s*', '', item.strip())
+
+                    # Create a list item node
+                    li_node = HTMLNode(tag="li", children=[])
+
+                    # Process inline formatting for the item text
+                    li_node.children = text_to_children(item_text)
+
+                    # Add the list item to the unordered list
+                    ol_node.children.append(li_node)
+            
+            # Add the list item to the unordered list
+            parent_node.children.append(ol_node)
+
+    return parent_node
 
         
 
         # if block_type == "paragraph":
 
-    
+def text_to_children(text):
+    # Convert the text to a list of TextNodes (my function)
+    text_nodes = text_to_textnodes(text)
 
+    # Convert each TextNode to an HTMLNode
+    html_nodes = []
+    for text_node in text_nodes:
+        html_node = text_node_to_html_node(text_node)
+        html_nodes.append(html_node)
 
+    return html_nodes
     
-    
-markdown_text ="- This is the first list item in a list block\n\n- This is a list item\n\n- This is another list item"
+# markdown_text ="- This is the first list item in a list block\n\n- This is a list item\n\n- This is another list item"
 
-print(markdown_to_html_node(markdown_text))
+# print(markdown_to_html_node(markdown_text))
 
 
