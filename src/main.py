@@ -5,9 +5,10 @@ from textsplit import *
 def main():
     copy_path = './static'
     destination_path = './public'
-    delete_everything_inside_folder(destination_path)
-    copy_everything_from_to(copy_path, destination_path)
-    generate_page('content/index.md', 'template.html', 'public/index.html')
+    #delete_everything_inside_folder(destination_path)
+    #copy_everything_from_to(copy_path, destination_path)
+    generate_pages_recursive('./content/', './template.html', './public/')
+
 
 
     
@@ -88,6 +89,31 @@ def generate_page(from_path, template_path, dest_path):
         file.write(final_result)
 
     print("✨ Template filled successfully!")
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    if not os.path.exists(dir_path_content):
+        print(f"🚨 Oops, '{dir_path_content}' path, which you wanna generate FROM, doesn't exist!")
+        return
+    
+    os.makedirs(dest_dir_path, exist_ok=True)
+    print(f"📁 Ensured destination folder '{dest_dir_path}' exists.")
+
+    for item in os.listdir(dir_path_content):
+        new_from_path = os.path.join(dir_path_content, item)
+        new_to_path = os.path.join(dest_dir_path, item)
+
+        if os.path.isfile(new_from_path):
+            # If it's a file, simply copy it!
+            if item.endswith('.md'):
+                html_filename = os.path.splitext(item)[0] + ".html"
+                dest_file_path = os.path.join(dest_dir_path, html_filename)
+                generate_page(new_from_path, template_path, dest_file_path)
+
+        elif os.path.isdir(new_from_path):
+            # If it's a directory, use recursion to copy its contents
+            print(f"📂 Found directory: '{new_from_path}'. Going deeper...")
+            generate_pages_recursive(new_from_path, template_path, new_to_path)
+
 
 
 
